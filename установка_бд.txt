@@ -1,0 +1,55 @@
+ИНСТРУКЦИЯ ПО ВОССТАНОВЛЕНИЮ БАЗЫ ДАННЫХ POSTGRESQL
+
+1. УСТАНОВКА POSTGRESQL (ЕСЛИ ЕЩЁ НЕ УСТАНОВЛЕН)
+   - Скачай PostgreSQL с официального сайта: https://www.postgresql.org/download/
+   - Установи с настройками по умолчанию
+   - Запомни пароль, который задашь при установке
+
+2. ПОДГОТОВКА
+   - Сохрани файл backup.sql в удобную папку, например: C:\temp\backup.sql
+
+3. СОЗДАНИЕ БАЗЫ ДАННЫХ
+   - Открой Командную строку (cmd) или PowerShell
+   - Выполни команду:
+        psql -U postgres -c "CREATE DATABASE movies;"
+
+   Если команда не работает, найди "SQL Shell (psql)" в меню Пуск и выполни там:
+        CREATE DATABASE movies;
+
+4. ВОССТАНОВЛЕНИЕ ИЗ ФАЙЛА
+   - В командной строке выполни:
+        psql -U postgres -d movies -f "C:\temp\backup.sql"
+
+   В процессе попросит ввести пароль - введи тот, что задавал при установке.
+
+5. ЕСЛИ ВОЗНИКЛИ ПРОБЛЕМЫ:
+
+   Вариант А - Через графический интерфейс pgAdmin:
+   - Открой pgAdmin из меню Пуск
+   - Слева раскрой Servers → PostgreSQL → Databases
+   - Правой кнопкой на movies → Restore...
+   - В поле Filename выбери файл backup.sql
+   - Нажми Restore
+
+   Вариант Б - Если файл большой:
+   - Перенеси файл backup.sql в папку: C:\Users\ТВОЕ_ИМЯ_ПОЛЬЗОВАТЕЛЯ\
+   - Выполни команды:
+        psql -U postgres -d movies
+        \i backup.sql
+
+6. ПРОВЕРКА
+   - После восстановления проверь, что все данные на месте:
+        psql -U postgres -d movies -c "\dt"
+
+ЧАСТЫЕ ОШИБКИ И РЕШЕНИЯ:
+
+- "psql: command not found" - добавь путь к PostgreSQL в переменную PATH
+  или используй "SQL Shell (psql)" из меню Пуск
+
+- "password authentication failed" - проверь пароль
+
+- "database does not exist" - создай базу данных (пункт 3)
+
+- "permission denied" - запусти командную строку от имени администратора
+
+Если ничего не помогает - скинь скриншот ошибки, разберёмся!

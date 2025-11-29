@@ -1,0 +1,229 @@
+== 1. ACTORS (/actors)
+
+GET /actors
+Описание: список актёров с пагинацией и поиском.
+Параметры query:
+
+limit (int, default 20)
+
+offset (int, default 0)
+
+name (str | None) — поиск по имени
+Возвращает:
+{ count, items: [{actor_id, name}] }
+
+GET /actors/{actor_id}
+Описание: детали актёра.
+Параметры: actor_id (str)
+Возвращает: {actor_id, name, birth_year, bio, photo_url}
+
+GET /actors/{actor_id}/films
+Описание: фильмы данного актёра.
+Возвращает: {count, items: [{film_id, title}]}
+
+POST /actors
+Описание: создать актёра.
+Тело запроса: JSON
+{ actor_id?, name, bio?, birth_year?, photo_url? }
+Возвращает: {status:"created", actor_id}
+
+PATCH /actors/{actor_id}
+Описание: обновить данные актёра.
+Тело запроса: JSON (name?, bio?, birth_year?, photo_url?)
+Возвращает: {status:"updated"}
+
+DELETE /actors/{actor_id}
+Описание: удалить актёра.
+Возвращает: {status:"deleted"}
+
+====================================================
+== 2. AUTH (/auth)
+
+POST /auth/register
+Описание: регистрация пользователя.
+Форм-данные или query: username, email, password
+Возвращает: {msg:"OK", id}
+
+POST /auth/login
+Описание: вход.
+Формат: OAuth2PasswordRequestForm
+form.username = email
+form.password = password
+Возвращает: {access_token, token_type:"bearer"}
+
+GET /auth/me
+Описание: информация о текущем пользователе по токену.
+Возвращает: {id, username, email}
+
+====================================================
+== 3. FAVORITES (/favorites)
+
+--------- ФИЛЬМЫ ---------
+
+POST /favorites/films/{film_id}
+Параметры:
+
+film_id (int — path)
+
+user_id (int — query)
+Возвращает: {status:"added", film_id}
+
+DELETE /favorites/films/{film_id}
+Параметры: film_id, user_id
+Возвращает: {status:"removed", film_id}
+
+GET /favorites/films
+Параметры: user_id
+Возвращает: {count, items: [{film_id,title}]}
+
+--------- АКТЁРЫ ---------
+
+POST /favorites/actors/{actor_id}
+Параметры: actor_id, user_id
+Возвращает: {status:"added", actor_id}
+
+DELETE /favorites/actors/{actor_id}
+Параметры: actor_id, user_id
+Возвращает: {status:"removed", actor_id}
+
+GET /favorites/actors
+Параметры: user_id
+Возвращает: {count, items:[{actor_id,name}]}
+
+====================================================
+== 4. FILMS (/films)
+
+GET /films/top
+Возвращает: топ-5 по рейтингу
+{count, items:[{id,title}]}
+
+GET /films/newest
+Возвращает: новые фильмы
+{count, items:[{id,title}]}
+
+GET /films/{film_id}
+Возвращает: базовые данные фильма
+{id,title,year,description,runtime,poster_url}
+
+GET /films/{film_id}/actors
+Возвращает: актёров фильма
+{count, items:[{actor_id,name}]}
+
+GET /films/{film_id}/genres
+Возвращает: жанры фильма
+{count, items:[{genre_id,name}]}
+
+GET /films/{film_id}/ratings
+Возвращает: список оценок
+{count, items:[{user_id,rating}]}
+
+GET /films/{film_id}/rating
+Возвращает: средний рейтинг
+{film_id, avg_rating}
+
+GET /films/{film_id}/details
+Возвращает: полные данные фильма (жанры, актёры, статистика)
+{ film_id,title,release_year,description,runtime,poster_url, genres[], actors[], stats{} }
+
+====================================================
+== 5. GENRES (/genres)
+
+GET /genres
+Параметры: limit, offset, name
+Возвращает: {count, items:[{genre_id,name}]}
+
+GET /genres/{genre_id}
+Возвращает: {genre_id,name}
+
+GET /genres/{genre_id}/films
+Возвращает: {count, items:[{film_id,title}]}
+
+POST /genres
+Тело: {name}
+Возвращает: {status:"created", genre_id}
+
+PATCH /genres/{genre_id}
+Тело: {name?}
+Возвращает: {status:"updated"}
+
+DELETE /genres/{genre_id}
+Возвращает: {status:"deleted"}
+
+====================================================
+== 6. HOME (/home)
+
+GET /home
+Параметры: user_id (optional)
+Возвращает блоки: top_films, newest_films, recommended
+
+GET /home/recommended
+Параметры: user_id
+Возвращает: {items:[{id,title}]}
+
+GET /home/trending
+Возвращает: {items:[{id,title}]}
+
+====================================================
+== 7. RATINGS (/ratings)
+
+GET /ratings/{film_id}
+Возвращает список оценок
+{count, items:[{user_id,rating}]}
+
+GET /ratings/{film_id}/avg
+Возвращает средний рейтинг
+{film_id, avg_rating}
+
+POST /ratings/{film_id}
+Query параметры: rating (1..10), user_id
+Возвращает: {status:"ok", film_id, rating}
+
+DELETE /ratings/{film_id}
+Query параметры: user_id
+Возвращает: {status:"deleted", film_id}
+
+====================================================
+== 8. SEARCH (/search)
+
+GET /search?q=...
+Выполняет поиск по фильмам, актёрам, пользователям
+Возвращает:
+{ query, results:{films[], actors[], users[]} }
+
+====================================================
+== 9. USERS (/users)
+
+GET /users/{user_id}
+Возвращает модель пользователя
+
+GET /users
+Query: q (optional) — поиск по username
+Возвращает список пользователей
+
+POST /users
+Тело: UserCreate
+Создать пользователя
+
+PUT /users/{user_id}
+Тело: UserUpdate
+Обновить пользователя
+
+DELETE /users/{user_id}
+Возвращает: {status:"deleted"}
+
+====================================================
+== 10. WATCHED (/watched)
+
+POST /watched/{film_id}
+Query: user_id
+Пометить фильм как просмотренный
+Возвращает: {status:"watched", film_id}
+
+DELETE /watched/{film_id}
+Query: user_id
+Убрать из просмотренных
+Возвращает: {status:"unmarked", film_id}
+
+GET /watched
+Query: user_id
+Возвращает: {count, film_ids:[...]}

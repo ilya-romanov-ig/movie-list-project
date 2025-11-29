@@ -1,0 +1,31 @@
+Запустить cmd в папке project
+
+Удалите виртуальное окружение: папку venv
+Создайте новое виртуальнео окржение:
+python -m venv venv
+
+Перейти в виртуальное окружение:
+venv\Scripts\activate
+
+Установить зависимости
+pip install -r requirements.txt
+
+
+Настроить PostgreSQL.
+Убедиться, что сервер PostgreSQL запущен.
+Создать базу данных moveis по приложенной инструкции:
+
+
+Запустить сервер FastAPI:
+uvicorn app.main:app --reload
+
+Открыть браузер и перейти на документацию API:
+Swagger UI:
+http://localhost:8000/docs
+
+
+Проверить работу API, например:
+http://localhost:8000/home
+
+Для остановки сервера нажать:
+CTRL + C
