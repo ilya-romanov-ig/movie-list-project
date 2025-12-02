@@ -15,9 +15,7 @@
       </v-col>
     </v-row>
 
-    <!-- Основная информация о фильме -->
     <v-row class="mb-8">
-      <!-- Постер фильма -->
       <v-col cols="12" md="4" lg="3">
         <v-img
           :src="movie.poster"
@@ -157,7 +155,7 @@ const movie = ref({
   title: 'Интерстеллар',
   year: 2014,
   duration: 169, // в минутах
-  poster: 'https://via.placeholder.com/300x450',
+  poster: 'https://image.tmdb.org/t/p/w500/xP2JKtdq77aWWZ1LCGsR68co5Jw.jpg',
   rating: 8.6,
   ratingsCount: 1500000,
   viewsCount: 5000000,

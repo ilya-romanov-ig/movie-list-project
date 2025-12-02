@@ -48,7 +48,7 @@ defineEmits(['click'])
 .movie-card {
   cursor: pointer;
   transition: all 0.3s ease;
-  max-width: 150px;
+  max-width: 200px;
   border-radius: 8px;
   overflow: hidden;
 }

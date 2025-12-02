@@ -45,7 +45,7 @@ const searchMode = ref('фильмам')
 const recommendedMovies = ref(Array.from({ length: 10 }, (_, i) => ({
   id: i + 1,
   title: `Фильм ${i + 1}`,
-  poster: 'https://via.placeholder.com/150x225',
+  poster: 'https://image.tmdb.org/t/p/w500/xP2JKtdq77aWWZ1LCGsR68co5Jw.jpg',
   rating: 8.5
 })))
 
