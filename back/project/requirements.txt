@@ -11,4 +11,5 @@ tqdm
 email-validator
 pydantic[email]
 python-multipart
+pydantic-settings
 

@@ -31,7 +31,7 @@ async def register(username: str, email: str, password: str):
         await session.commit()
         await session.refresh(new_user)
 
-        return {"msg": "OK", "id": new_user.id}
+        return {"msg": "OK", "id": new_user.user_id}
 
 
 # -------------------
@@ -40,14 +40,15 @@ async def register(username: str, email: str, password: str):
 from fastapi.security import OAuth2PasswordRequestForm
 
 @router.post("/login")
-async def login(form: OAuth2PasswordRequestForm = Depends()):
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     async with async_session() as session:
-        user = await session.scalar(select(User).where(User.email == form.username))
+        user = await session.scalar(select(User).where(User.email == form_data.username))
 
-    if not user or not verify_password(form.password, user.password_hash):
+    if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(401, "Invalid email or password")
 
-    token = create_access_token({"sub": user.id})
+    token = create_access_token({"sub": user.user_id}) # важно!
+
     return {"access_token": token, "token_type": "bearer"}
 
 
@@ -57,7 +58,7 @@ async def login(form: OAuth2PasswordRequestForm = Depends()):
 @router.get("/me")
 async def get_me(user: User = Depends(get_current_user)):
     return {
-        "id": user.id,
+        "id": user.user_id,
         "username": user.username,
         "email": user.email
     }
