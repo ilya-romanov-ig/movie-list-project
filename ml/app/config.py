@@ -11,9 +11,9 @@ class Config:
     
     DATA_PATHS = {
         'ratings': os.getenv('RATINGS_PATH', 'data/ratings.csv'),
-        'fav_films': os.getenv('FAV_FILMS_PATH', 'data/favourite_films.csv'),
-        'fav_actors': os.getenv('FAV_ACTORS_PATH', 'data/favourite_actors.csv'),
-        'film_actor': os.getenv('FILM_ACTOR_PATH', 'data/film_actor.csv'),
+        'fav_films': os.getenv('FAV_FILMS_PATH', 'data/favorite_films.csv'),
+        'fav_actors': os.getenv('FAV_ACTORS_PATH', 'data/favorite_actors.csv'),
+        'film_actor': os.getenv('FILM_ACTOR_PATH', 'data/film_actors.csv'),
     }
     
     MODEL_PARAMS = {

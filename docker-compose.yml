@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  # ----------------------- FRONTEND -----------------------
+  frontend:
+    build: ./front
+    container_name: vue-frontend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+  # ----------------------- BACKEND -----------------------
+  backend:
+    build: ./back
+    container_name: fastapi-backend
+    restart: always
+    ports:
+      - "8001:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/appdb
+      JWT_SECRET: "supersecretkey123"
+      JWT_ALGORITHM: "HS256"
+      ML_URL: http://movie-recommender:8000
+    depends_on:
+      - db
+      - movie-recommender
+
+  # ----------------------- ML SERVICE -----------------------
+  movie-recommender:
+    build: ./ml
+    container_name: movie-recommender-api
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./ml/data:/app/data:ro
+      - ./ml/logs:/app/logs
+    env_file:
+      - ./ml/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ----------------------- POSTGRES -----------------------
+  db:
+    image: postgres:18
+    container_name: postgres-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: appdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - ./back/db_init:/docker-entrypoint-initdb.d
+
+volumes:
+  pgdata:
