@@ -39,16 +39,4 @@ import pathlib
 
 
 
-from app.db import engine
-from sqlalchemy import text
-
-@app.on_event("startup")
-async def test_db():
-    try:
-        async with engine.connect() as conn:
-            await conn.execute(text("SELECT 1"))
-        print("DB CONNECTION OK")
-    except Exception as e:
-        print("DB ERROR:", e)
-
 
