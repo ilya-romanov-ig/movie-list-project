@@ -21,31 +21,49 @@
       </v-col>
     </v-row>
 
-    <v-row v-else-if="movie" class="mb-8">
+    <v-row v-else-if="movieData" class="mb-8">
       <v-col cols="12" md="4" lg="3">
-        <v-img
-          :src="movie.poster_url"
-          aspect-ratio="2/3"
-          class="movie-poster elevation-6"
-          rounded
-        >
-          <template v-slot:placeholder>
-            <v-row class="fill-height ma-0" align="center" justify="center">
-              <v-progress-circular indeterminate color="grey lighten-5" />
-            </v-row>
-          </template>
-        </v-img>
+        <div class="poster-container">
+          <v-img
+            :src="posterUrl"
+            aspect-ratio="2/3"
+            class="movie-poster elevation-6"
+            rounded
+            @error="handleImageError"
+            max-width="300"
+          >
+            <template v-slot:placeholder>
+              <v-row class="fill-height ma-0" align="center" justify="center">
+                <v-progress-circular indeterminate color="grey lighten-5" />
+              </v-row>
+            </template>
+            
+            <!-- Заглушка при ошибке -->
+            <template v-if="imageError" v-slot:error>
+              <v-sheet
+                color="grey-darken-3"
+                class="d-flex align-center justify-center fill-height"
+                rounded
+              >
+                <div class="text-center">
+                  <v-icon size="64" color="grey-lighten-1">mdi-image-off</v-icon>
+                  <div class="text-caption mt-2">Постер не найден</div>
+                </div>
+              </v-sheet>
+            </template>
+          </v-img>
+        </div>
       </v-col>
 
       <v-col cols="12" md="8" lg="9">
         <div class="d-flex align-center mb-2">
-          <h1 class="movie-title">{{ movie.title }}</h1>
-          <span class="movie-year ml-4">({{ movie.release_year }})</span>
+          <h1 class="movie-title">{{ movieData.title }}</h1>
+          <span class="movie-year ml-4">({{ movieData.release_year }})</span>
         </div>
 
         <div class="mb-4">
           <v-chip
-            v-for="genre in movie.genres"
+            v-for="genre in movieData.genres || []"
             :key="genre.genre_id"
             class="mr-2 mb-2"
             color="primary"
@@ -57,7 +75,7 @@
 
         <div class="d-flex align-center mb-4">
           <v-icon class="mr-2">mdi-clock-outline</v-icon>
-          <span class="mr-4">{{ formatDuration(movie.runtime) }}</span>
+          <span class="mr-4">{{ formatDuration(movieData.runtime) }}</span>
           <v-icon class="mr-2 ml-4" color="amber">mdi-star</v-icon>
           <span class="movie-rating">{{ averageRating?.toFixed(1) || 'N/A' }}</span>
           <span class="ml-2 text-grey">({{ ratingsCount || 0 }} оценок)</span>
@@ -66,14 +84,8 @@
         <v-row class="mb-6">
           <v-col cols="6" md="4" lg="3">
             <div class="stat-item">
-              <div class="stat-value">{{ movie.stats?.views_count?.toLocaleString() || 0 }}</div>
+              <div class="stat-value">{{ movieData.stats?.watched_count?.toLocaleString() || 0 }}</div>
               <div class="stat-label">Просмотров</div>
-            </div>
-          </v-col>
-          <v-col cols="6" md="4" lg="3">
-            <div class="stat-item">
-              <div class="stat-value">{{ movie.stats?.favorites_count?.toLocaleString() || 0 }}</div>
-              <div class="stat-label">В избранном</div>
             </div>
           </v-col>
         </v-row>
@@ -98,7 +110,7 @@
 
         <div class="mb-8">
           <h3 class="mb-2">Описание</h3>
-          <p class="movie-description">{{ movie.description }}</p>
+          <p class="movie-description">{{ movieData.description || 'Описание отсутствует' }}</p>
         </div>
       </v-col>
     </v-row>
@@ -107,10 +119,10 @@
       {{ error }}
     </v-alert>
 
-    <div v-if="movie?.actors?.length > 0" class="mb-8">
+    <div v-if="movieData?.actors?.length > 0" class="mb-8">
       <h2 class="mb-4">Актёры</h2>
       <v-slide-group show-arrows>
-        <v-slide-item v-for="actor in movie.actors" :key="actor.actor_id">
+        <v-slide-item v-for="actor in movieData.actors" :key="actor.id">
           <ActorCard 
             :actor="actor" 
             class="mx-3"
@@ -159,10 +171,11 @@ const watchedService = useWatchedService()
 const searchQuery = ref('')
 const loading = ref(true)
 const error = ref(null)
-const movie = ref(null)
+const movieData = ref(null) // переименовали movie в movieData для ясности
 const similarMovies = ref([])
 const averageRating = ref(0)
 const ratingsCount = ref(0)
+const imageError = ref(false) // добавили обработку ошибок изображения
 
 const isInFavorites = ref(false)
 const isWatched = ref(false)
@@ -175,6 +188,16 @@ const actionLoading = ref({
 })
 
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+
+// ВЫЧИСЛЯЕМЫЙ URL для постера
+const posterUrl = computed(() => {
+  if (!movieData.value?.poster_url) {
+    return getDefaultPoster()
+  }
+  
+  // Используем метод из movieService для формирования URL
+  return movieService.formatPosterUrl(movieData.value.poster_url)
+})
 
 const actionButtons = computed(() => {
   const baseButtons = [
@@ -234,7 +257,8 @@ const goToGenre = (genre) => {
 }
 
 const goToActor = (actor) => {
-  router.push(`/actor/${actor.actor_id}`)
+  console.log(actor)
+  router.push(`/actor/${actor.id}`)
 }
 
 const goToMovie = (movieId) => {
@@ -248,6 +272,15 @@ const performSearch = () => {
       query: { q: searchQuery.value }
     })
   }
+}
+
+const handleImageError = () => {
+  console.warn('Не удалось загрузить постер для фильма:', movieData.value?.title)
+  imageError.value = true
+}
+
+const getDefaultPoster = () => {
+  return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQ1MCIgdmlld0JveD0iMCAwIDMwMCA0NTAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSI0NTAiIGZpbGw9IiMxRDFFMjMiIHJ4PSI4Ii8+PHRleHQgeD0iMTUwIiB5PSIyMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgSGVscmV0aWNhLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmaWxsPSIjRkZGIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXdlaWdodD0iNTAwIj5GaWxtIFBvc3RlcjwvdGV4dD48dGV4dCB4PSIxNTAiIHk9IjI0NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBIZWx2ZXRpY2EsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiNGRkYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZvbnQtd2VpZ2h0PSIzMDAiPk5vdCBhdmFpbGFibGU8L3RleHQ+PHBhdGggZD0iTTEwMCAxNTBIMjAwTTE1MCAxMDBWMjAwIiBzdHJva2U9IiNGRkYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+'
 }
 
 const handleAction = async (type) => {
@@ -319,17 +352,19 @@ const loadMovieData = async () => {
   try {
     loading.value = true
     error.value = null
+    imageError.value = false // сбрасываем ошибку изображения
 
-    const [movieData, ratingData] = await Promise.all([
+    const [movieDataResponse, ratingData] = await Promise.all([
       movieService.getFilmDetails(movieId),
       ratingService.getAverageRating(movieId)
     ])
 
-    movie.value = movieData
+    // Сохраняем данные
+    movieData.value = movieDataResponse
     averageRating.value = ratingData.avg_rating || 0
 
-    if (movieData.stats?.ratings_count) {
-      ratingsCount.value = movieData.stats.ratings_count
+    if (movieDataResponse.stats?.ratings_count) {
+      ratingsCount.value = movieDataResponse.stats.ratings_count
     }
 
     if (isAuthenticated.value) {
@@ -386,9 +421,22 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.movie-poster {
+.poster-container {
+  position: relative;
   max-width: 300px;
   margin: 0 auto;
+}
+
+.movie-poster {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.movie-poster:hover {
+  transform: scale(1.02);
 }
 
 .movie-title {

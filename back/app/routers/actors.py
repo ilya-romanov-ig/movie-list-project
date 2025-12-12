@@ -77,9 +77,11 @@ async def create_new_actor(
     data: dict,
     db: AsyncSession = Depends(get_db),
 ):
+    if not data.get("name"):
+        raise HTTPException(400, "Field 'name' is required")
+
     actor = await create_actor(
         db,
-        actor_id=data.get("actor_id"),   # очень важно!
         name=data.get("name"),
         bio=data.get("bio"),
         birth_year=data.get("birth_year"),

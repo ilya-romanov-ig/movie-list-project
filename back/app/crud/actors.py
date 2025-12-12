@@ -1,3 +1,4 @@
+# app/crud/actors.py
 from typing import List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +12,7 @@ from app.models.film import Film
 # Basic getters
 # -----------------------
 
-async def get_actor_by_id(session: AsyncSession, actor_id: str) -> Optional[Actor]:
+async def get_actor_by_id(session: AsyncSession, actor_id: str) -> Optional[Actor]:  # Изменено: str -> int
     return await session.get(Actor, actor_id)
 
 
@@ -39,14 +40,12 @@ async def list_actors(
 async def create_actor(
     session: AsyncSession,
     *,
-    actor_id: str,
-    name: str,
+    name: str,  # Убрано: actor_id: str
     bio: Optional[str] = None,
     birth_year: Optional[int] = None,
     photo_url: Optional[str] = None,
 ) -> Actor:
     actor = Actor(
-        actor_id=actor_id,
         name=name,
         bio=bio,
         birth_year=birth_year,
@@ -65,7 +64,7 @@ async def create_actor(
 
 async def update_actor(
     session: AsyncSession,
-    actor_id: str,
+    actor_id: str,  # Изменено: str -> int
     *,
     name: Optional[str] = None,
     bio: Optional[str] = None,
@@ -96,7 +95,7 @@ async def update_actor(
 # Delete
 # -----------------------
 
-async def delete_actor(session: AsyncSession, actor_id: str) -> bool:
+async def delete_actor(session: AsyncSession, actor_id: str) -> bool:  # Изменено: str -> int
     actor = await get_actor_by_id(session, actor_id)
     if not actor:
         return False
@@ -111,7 +110,7 @@ async def delete_actor(session: AsyncSession, actor_id: str) -> bool:
 # -----------------------
 
 async def get_films_of_actor(
-    session: AsyncSession, actor_id: str, limit: int = 50
+    session: AsyncSession, actor_id: str, limit: int = 50  # Изменено: str -> int
 ) -> List[Film]:
     stmt = (
         select(Film)

@@ -5,6 +5,8 @@ from typing import Optional
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from typing import Optional
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.db import async_session
 from sqlalchemy import select
@@ -18,7 +20,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
-
+optional_security = HTTPBearer(auto_error=False)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -31,6 +33,29 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+
+async def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security)
+) -> Optional[User]:
+    if credentials is None:
+        return None
+    
+    token = credentials.credentials
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id is None:
+            return None
+        
+        user_id = int(user_id)
+        
+    except (JWTError, ValueError):
+        return None
+    
+    async with async_session() as session:
+        user = await session.scalar(select(User).where(User.user_id == user_id))
+    
+    return user
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:

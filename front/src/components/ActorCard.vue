@@ -34,13 +34,7 @@ defineProps({
   actor: {
     type: Object,
     required: true,
-    default: () => ({
-      actor_id: null,
-      name: '',
-      photo_url: '',
-      photo: '',
-      role: ''
-    })
+    default: () => {}
   }
 })
 

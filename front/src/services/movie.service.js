@@ -35,6 +35,16 @@ export function useMovieService() {
 
     async searchFilms(query, params = {}) {
       return api.get('/films', { q: query, ...params })
+    },
+
+    formatPosterUrl(filename) {
+      if (!filename) return this._getDefaultPoster()
+      
+      const baseUrl = import.meta.env.VITE_IMAGES_URL || 
+                    import.meta.env.VITE_API_URL || 
+                    'http://localhost:8001'
+      
+      return `${baseUrl}/${filename}`
     }
   }
 }

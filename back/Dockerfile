@@ -10,6 +10,8 @@ RUN apt update && apt install -y \
     build-essential \
     && apt clean && rm -rf /var/lib/apt/lists/*
 
+
+RUN mkdir -p /app/posters
 # Установка Python зависимостей
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \

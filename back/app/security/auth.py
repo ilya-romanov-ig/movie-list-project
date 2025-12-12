@@ -1,0 +1,90 @@
+# app/routers/auth.py
+from fastapi import APIRouter, Depends, HTTPException, Body
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.security.hash import verify_password, get_password_hash
+from app.security.jwt import create_access_token, get_current_user
+from app.db import get_db
+from app.models.user import User
+
+router = APIRouter(prefix="/auth", tags=["Auth"])
+
+
+# -------------------
+# REGISTRATION
+# -------------------
+@router.post("/register")
+async def register(
+    username: str = Body(...),
+    email: str = Body(...),
+    password: str = Body(...),
+    db: AsyncSession = Depends(get_db)
+):
+    # Проверяем, существует ли пользователь с таким email или username
+    exists_email = await db.scalar(select(User).where(User.email == email))
+    if exists_email:
+        raise HTTPException(400, "User with this email already exists")
+
+    exists_username = await db.scalar(select(User).where(User.username == username))
+    if exists_username:
+        raise HTTPException(400, "User with this username already exists")
+
+    new_user = User(
+        username=username,
+        email=email,
+        password_hash=get_password_hash(password),
+        socials={}
+    )
+
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+
+    return {"msg": "OK", "id": new_user.user_id}
+
+
+# -------------------
+# LOGIN
+# -------------------
+from fastapi.security import OAuth2PasswordRequestForm
+
+@router.post("/login")
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db)
+):
+    user = await db.scalar(select(User).where(User.email == form_data.username))
+
+    if not user or not verify_password(form_data.password, user.password_hash):
+        raise HTTPException(401, "Invalid email or password")
+
+    token = create_access_token({"sub": user.user_id})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user_id": user.user_id,
+        "username": user.username
+    }
+
+
+# -------------------
+# CURRENT USER
+# -------------------
+@router.get("/me")
+async def get_me(user: User = Depends(get_current_user)):
+    return {
+        "id": user.user_id,
+        "username": user.username,
+        "email": user.email,
+        "socials": user.socials
+    }
+
+
+# -------------------
+# LOGOUT (просто для API)
+# -------------------
+@router.post("/logout")
+async def logout():
+    return {"msg": "Logged out successfully"}

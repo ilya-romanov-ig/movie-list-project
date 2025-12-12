@@ -6,10 +6,10 @@ psycopg2-binary
 python-dotenv
 pydantic
 python-jose[cryptography]
-passlib[bcrypt]
+passlib[argon2,bcrypt]==1.7.4
 tqdm
 email-validator
 pydantic[email]
 python-multipart
 pydantic-settings
-
+bcrypt==4.0.1

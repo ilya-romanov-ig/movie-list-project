@@ -1,10 +1,9 @@
 import { defineStore } from "pinia"
-import { useAuthService } from "@/services/auth.service"
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     token: localStorage.getItem("token") || null,
-    user: JSON.parse(localStorage.getItem("user")) || null,
+    user: JSON.parse(localStorage.getItem("user") || 'null'),
     userId: localStorage.getItem("userId") || null,
   }),
   
@@ -24,16 +23,29 @@ export const useAuthStore = defineStore("auth", {
     
     async fetchCurrentUser() {
       try {
-        const authService = useAuthService()
-        const userData = await authService.getCurrentUser()
+        // Используем window.fetch напрямую, чтобы избежать circular dependency
+        const response = await fetch('http://localhost:8001/auth/me', {
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json'
+          }
+        })
         
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
+        
+        const userData = await response.json()
         this.user = userData
         this.userId = userData.id
         localStorage.setItem("user", JSON.stringify(userData))
         localStorage.setItem("userId", userData.id)
+        
+        return userData
       } catch (error) {
         console.error("Failed to fetch user data:", error)
         this.clearAuth()
+        throw error
       }
     },
     

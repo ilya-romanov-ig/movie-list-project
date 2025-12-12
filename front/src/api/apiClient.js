@@ -31,7 +31,7 @@ export default class APIClient {
       const response = await fetch(url, {
         ...options,
         headers,
-        // Для FormData браузер сам установит правильные заголовки
+        credentials: 'include',
       })
 
       if (!response.ok) {

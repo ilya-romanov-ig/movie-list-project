@@ -310,6 +310,12 @@ onMounted(() => {
   font-size: 1rem;
 }
 
+:deep(.v-card) {
+  background: #2d3748 !important; /* Серый цвет */
+  color: white !important;
+  border-radius: 12px;
+}
+
 :deep(.v-card-title) {
   color: white;
   font-weight: 500;

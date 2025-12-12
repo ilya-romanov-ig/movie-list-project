@@ -8,6 +8,9 @@ services:
     ports:
       - "8080:80"
     restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:8001
+      VITE_IMAGES_URL: http://localhost:8001
 
   # ----------------------- BACKEND -----------------------
   backend:
@@ -17,10 +20,22 @@ services:
     ports:
       - "8001:8000"
     environment:
+      # База данных и аутентификация
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/appdb
       JWT_SECRET: "supersecretkey123"
-      JWT_ALGORITHM: "HS256"
+      JWT_ALG: "HS256"  # Изменил с JWT_ALGORITHM на JWT_ALG
+      
+      # Настройки изображений
+      # BASE_URL: http://localhost:8001  # Для доступа с хоста
+      # # BASE_URL: http://backend:8000  # Альтернатива для внутренней сети
+      POSTERS_PATH: /app/posters
+      POSTERS_BASE_URL: http://localhost:8001/posters
+      
+      # ML сервис
       ML_URL: http://movie-recommender:8000
+    volumes:
+      # Монтируем папку с постерами
+      - ./back/posters:/app/posters:ro  # read-only для безопасности
     depends_on:
       - db
       - movie-recommender

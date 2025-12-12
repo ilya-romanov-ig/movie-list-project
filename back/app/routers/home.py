@@ -1,6 +1,7 @@
 # app/routers/home.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Optional
 
 from app.db import get_db
 from app.crud.films import (
@@ -8,7 +9,7 @@ from app.crud.films import (
     get_newest,
     get_recommended_stub
 )
-from app.security.jwt import get_current_user
+from app.security.jwt import get_optional_user, get_current_user
 from app.models.user import User
 
 router = APIRouter(prefix="/home", tags=["Home"])
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/home", tags=["Home"])
 # --------------------------
 @router.get("")
 async def home_page(
-    current_user: User = Depends(get_current_user),  # <- JWT
+    current_user: Optional[User] = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db)
 ):
     user_id = current_user.user_id if current_user else None
@@ -30,17 +31,11 @@ async def home_page(
     recommended = await get_recommended_stub(db, user_id=user_id, limit=8)
 
     return {
-        "top_films": [
-            {"id": f.film_id, "title": f.title} for f in top
-        ],
-        "newest_films": [
-            {"id": f.film_id, "title": f.title} for f in newest
-        ],
-        "recommended": [
-            {"id": f.film_id, "title": f.title} for f in recommended
-        ]
+        "top_films": {"items": [{"id": f.film_id, "title": f.title} for f in top]},
+        "newest_films": {"items": [{"id": f.film_id, "title": f.title} for f in newest]},
+        "recommended": {"items": [{"id": f.film_id, "title": f.title} for f in recommended]},
+        "trending": {"items": [{"id": f.film_id, "title": f.title} for f in top]}  # Добавил trending
     }
-
 
 # --------------------------
 # GET /home/recommended

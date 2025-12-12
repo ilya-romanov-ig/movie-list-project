@@ -6,7 +6,7 @@ model_cfg = ConfigDict(from_attributes=True)
 class ActorBase(BaseModel):
     model_config = model_cfg
 
-    id: int
+    id: str
     name: str
 
 
