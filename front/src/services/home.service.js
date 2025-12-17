@@ -7,7 +7,6 @@ export function useHomeService() {
   const authStore = useAuthStore()
 
   const getUserId = () => {
-    // TODO: Получить ID пользователя из store или API
     return authStore.userId
   }
 

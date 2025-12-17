@@ -117,11 +117,13 @@ import MovieCard from '@/components/MovieCard.vue'
 import ActorCard from '@/components/ActorCard.vue'
 import { useFavoriteService } from '@/services/favorite.service'
 import { useWatchedService } from '@/services/watched.service'
+import { useCombinedMoviesService } from '@/services/front_page.service'
 
 const router = useRouter()
 
 const favoriteService = useFavoriteService()
 const watchedService = useWatchedService()
+const combinedService = useCombinedMoviesService()
 
 const searchQuery = ref('')
 const loading = ref(false)
@@ -164,16 +166,20 @@ const loadSavedData = async () => {
       favoriteService.getUserFavoriteActors()
     ])
     
-    favoriteMovies.value = favoritesData.items || []
     favoriteActors.value = actorsData.items || []
     
-    // Для просмотренных нужно получить детали фильмов
-    if (watchedData.film_ids?.length > 0) {
-      // TODO: Загрузить детали фильмов по ID
-      watchedMovies.value = watchedData.film_ids.map(id => ({
-        film_id: id,
-        title: `Фильм ${id}` // Временная заглушка
-      }))
+    const favoriteFilmIds = favoritesData.items?.map(m => m.film_id || m.id) || []
+    if (favoriteFilmIds.length > 0) {
+      favoriteMovies.value = await combinedService.getMoviesByIds(favoriteFilmIds)
+    } else {
+      favoriteMovies.value = []
+    }
+    
+    const watchedFilmIds = watchedData.film_ids || []
+    if (watchedFilmIds.length > 0) {
+      watchedMovies.value = await combinedService.getMoviesByIds(watchedFilmIds)
+    } else {
+      watchedMovies.value = []
     }
   } catch (err) {
     console.error('Ошибка загрузки сохранённого:', err)

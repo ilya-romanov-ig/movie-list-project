@@ -1,17 +1,26 @@
 <template>
   <PageWrapper>
-    <v-row justify="center" class="my-4">
-      <v-col cols="12" md="6">
-        <v-text-field
-          v-model="searchQuery"
-          label="Поиск по фильмам и актёрам"
-          clearable
-          outlined
-          color="white"
-          prepend-inner-icon="mdi-magnify"
-          class="search-field"
-          @keyup.enter="performSearch"
-        />
+    <v-row justify="center" class="mb-8">
+      <v-col cols="12" md="8">
+        <v-card class="profile-header-card" elevation="4">
+          <v-card-text class="pa-6">
+            <div class="d-flex align-center">
+              <v-avatar size="80" class="mr-4">
+                <v-icon size="64">mdi-account-circle</v-icon>
+              </v-avatar>
+              <div>
+                <h1 class="text-h5 font-weight-bold mb-2">{{ user?.username || 'Пользователь' }}</h1>
+                <p class="text-body-1 text-medium-emphasis mb-0">{{ user?.email }}</p>
+                <div class="d-flex align-center mt-2">
+                  <v-chip size="small" color="primary" class="mr-2">
+                    <v-icon start size="small">mdi-calendar</v-icon>
+                    Зарегистрирован: {{ formatDate(user?.created_at) }}
+                  </v-chip>
+                </div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
       </v-col>
     </v-row>
 
@@ -22,147 +31,264 @@
     </v-row>
 
     <div v-else>
-      <v-row class="mb-8">
-        <v-col cols="12">
-          <h1 class="profile-title">Профиль пользователя</h1>
-          <div class="user-info mb-6">
-            <v-icon size="64" class="mr-4">mdi-account-circle</v-icon>
-            <div>
-              <h2 class="user-name">{{ user?.username || 'Пользователь' }}</h2>
-              <p class="user-email text-grey">{{ user?.email }}</p>
-            </div>
-          </div>
-        </v-col>
-      </v-row>
 
+      <!-- Секции с данными -->
       <v-row>
+        <!-- Просмотренные фильмы -->
         <v-col cols="12" md="6">
-          <v-card class="mb-6" elevation="2">
-            <v-card-title class="d-flex justify-space-between align-center">
-              <span>Просмотренные фильмы</span>
-              <v-chip color="primary">{{ watchedMovies.length }}</v-chip>
+          <v-card class="mb-4" elevation="2">
+            <v-card-title class="d-flex justify-space-between align-center py-4 px-4">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="blue">mdi-eye</v-icon>
+                <span>Просмотренные фильмы</span>
+              </div>
+              <v-chip color="primary" variant="elevated">{{ watchedMovies.length }}</v-chip>
             </v-card-title>
-            <v-card-text>
-              <v-list v-if="watchedMovies.length > 0">
+            <v-divider />
+            <v-card-text class="pa-0">
+              <v-list v-if="watchedMovies.length > 0" class="pa-0">
                 <v-list-item
                   v-for="movie in watchedMovies"
                   :key="movie.film_id"
+                  :title="movie.title"
                   @click="goToMovie(movie.film_id)"
-                  class="mb-2"
+                  class="py-3 px-4"
                 >
                   <template v-slot:prepend>
-                    <v-icon>mdi-eye</v-icon>
+                    <v-avatar size="40" rounded class="mr-3">
+                      <v-img v-if="movie.poster_url" :src="movie.poster_url" />
+                      <v-icon v-else>mdi-film</v-icon>
+                    </v-avatar>
                   </template>
-                  <v-list-item-title>{{ movie.title }}</v-list-item-title>
+                  
+                  <v-list-item-title class="text-body-1 font-weight-medium">
+                    {{ movie.title }}
+                  </v-list-item-title>
+                  
                   <template v-slot:append>
-                    <v-btn icon variant="text" @click.stop="removeFromWatched(movie.film_id)">
-                      <v-icon>mdi-close</v-icon>
-                    </v-btn>
+                    <div class="d-flex align-center">
+                      <v-rating
+                        v-if="movie.rating"
+                        :model-value="movie.rating"
+                        size="small"
+                        readonly
+                        color="amber"
+                        density="compact"
+                        half-increments
+                      />
+                      <v-btn
+                        icon
+                        variant="text"
+                        size="small"
+                        @click.stop="removeFromWatched(movie.film_id)"
+                        class="ml-2"
+                      >
+                        <v-icon size="small">mdi-close</v-icon>
+                      </v-btn>
+                    </div>
                   </template>
                 </v-list-item>
               </v-list>
-              <v-alert v-else type="info">
-                Нет просмотренных фильмов
-              </v-alert>
+              <div v-else class="pa-4 text-center">
+                <v-icon size="64" color="grey" class="mb-2">mdi-film-off</v-icon>
+                <p class="text-body-1 text-medium-emphasis">Нет просмотренных фильмов</p>
+              </div>
             </v-card-text>
           </v-card>
         </v-col>
 
+        <!-- Избранные фильмы -->
         <v-col cols="12" md="6">
-          <v-card class="mb-6" elevation="2">
-            <v-card-title class="d-flex justify-space-between align-center">
-              <span>Избранные фильмы</span>
-              <v-chip color="primary">{{ favoriteMovies.length }}</v-chip>
+          <v-card class="mb-4" elevation="2">
+            <v-card-title class="d-flex justify-space-between align-center py-4 px-4">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="red">mdi-heart</v-icon>
+                <span>Избранные фильмы</span>
+              </div>
+              <v-chip color="red" variant="elevated">{{ favoriteMovies.length }}</v-chip>
             </v-card-title>
-            <v-card-text>
-              <v-list v-if="favoriteMovies.length > 0">
+            <v-divider />
+            <v-card-text class="pa-0">
+              <v-list v-if="favoriteMovies.length > 0" class="pa-0">
                 <v-list-item
                   v-for="movie in favoriteMovies"
                   :key="movie.film_id"
+                  :title="movie.title"
                   @click="goToMovie(movie.film_id)"
-                  class="mb-2"
+                  class="py-3 px-4"
                 >
                   <template v-slot:prepend>
-                    <v-icon color="red">mdi-heart</v-icon>
+                    <v-avatar size="40" rounded class="mr-3">
+                      <v-img v-if="movie.poster_url" :src="movie.poster_url" />
+                      <v-icon v-else>mdi-film</v-icon>
+                    </v-avatar>
                   </template>
-                  <v-list-item-title>{{ movie.title }}</v-list-item-title>
+                  
+                  <v-list-item-title class="text-body-1 font-weight-medium">
+                    {{ movie.title }}
+                  </v-list-item-title>
+                  
                   <template v-slot:append>
-                    <v-btn icon variant="text" @click.stop="removeFromFavorites(movie.film_id)">
-                      <v-icon>mdi-close</v-icon>
-                    </v-btn>
+                    <div class="d-flex align-center">
+                      <v-rating
+                        v-if="movie.rating"
+                        :model-value="movie.rating"
+                        size="small"
+                        readonly
+                        color="amber"
+                        density="compact"
+                        half-increments
+                      />
+                      <v-btn
+                        icon
+                        variant="text"
+                        size="small"
+                        @click.stop="removeFromFavorites(movie.film_id)"
+                        class="ml-2"
+                      >
+                        <v-icon size="small">mdi-close</v-icon>
+                      </v-btn>
+                    </div>
                   </template>
                 </v-list-item>
               </v-list>
-              <v-alert v-else type="info">
-                Нет избранных фильмов
-              </v-alert>
+              <div v-else class="pa-4 text-center">
+                <v-icon size="64" color="grey" class="mb-2">mdi-heart-off</v-icon>
+                <p class="text-body-1 text-medium-emphasis">Нет избранных фильмов</p>
+              </div>
             </v-card-text>
           </v-card>
         </v-col>
-      </v-row>
 
-      <v-row>
+        <!-- Избранные актёры -->
         <v-col cols="12" md="6">
-          <v-card class="mb-6" elevation="2">
-            <v-card-title class="d-flex justify-space-between align-center">
-              <span>Избранные актёры</span>
-              <v-chip color="primary">{{ favoriteActors.length }}</v-chip>
+          <v-card class="mb-4" elevation="2">
+            <v-card-title class="d-flex justify-space-between align-center py-4 px-4">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="red">mdi-heart</v-icon>
+                <span>Избранные актёры</span>
+              </div>
+              <v-chip color="red" variant="elevated">{{ favoriteActors.length }}</v-chip>
             </v-card-title>
-            <v-card-text>
-              <v-list v-if="favoriteActors.length > 0">
+            <v-divider />
+            <v-card-text class="pa-0">
+              <v-list v-if="favoriteActors.length > 0" class="pa-0">
                 <v-list-item
                   v-for="actor in favoriteActors"
                   :key="actor.actor_id"
+                  :title="actor.name"
                   @click="goToActor(actor.actor_id)"
-                  class="mb-2"
+                  class="py-3 px-4"
                 >
                   <template v-slot:prepend>
-                    <v-icon color="red">mdi-heart</v-icon>
+                    <v-avatar size="40" rounded class="mr-3">
+                      <v-img v-if="actor.photo_url" :src="actor.photo_url" />
+                      <v-icon v-else>mdi-account</v-icon>
+                    </v-avatar>
                   </template>
-                  <v-list-item-title>{{ actor.name }}</v-list-item-title>
+                  
+                  <v-list-item-title class="text-body-1 font-weight-medium">
+                    {{ actor.name }}
+                  </v-list-item-title>
+                  
+                  <v-list-item-subtitle v-if="actor.birth_date || actor.country" class="text-caption">
+                    {{ actor.birth_date ? formatDate(actor.birth_date) : '' }}
+                    {{ actor.country ? ` • ${actor.country}` : '' }}
+                  </v-list-item-subtitle>
+                  
                   <template v-slot:append>
-                    <v-btn icon variant="text" @click.stop="removeActorFromFavorites(actor.actor_id)">
-                      <v-icon>mdi-close</v-icon>
+                    <v-btn
+                      icon
+                      variant="text"
+                      size="small"
+                      @click.stop="removeActorFromFavorites(actor.actor_id)"
+                    >
+                      <v-icon size="small">mdi-close</v-icon>
                     </v-btn>
                   </template>
                 </v-list-item>
               </v-list>
-              <v-alert v-else type="info">
-                Нет избранных актёров
-              </v-alert>
+              <div v-else class="pa-4 text-center">
+                <v-icon size="64" color="grey" class="mb-2">mdi-account-off</v-icon>
+                <p class="text-body-1 text-medium-emphasis">Нет избранных актёров</p>
+              </div>
             </v-card-text>
           </v-card>
         </v-col>
 
+        <!-- Статистика -->
         <v-col cols="12" md="6">
-          <v-card class="mb-6" elevation="2">
-            <v-card-title class="d-flex justify-space-between align-center">
-              <span>Статистика</span>
+          <v-card class="mb-4" elevation="2">
+            <v-card-title class="d-flex justify-space-between align-center py-4 px-4">
+              <div class="d-flex align-center">
+                <v-icon class="mr-2" color="green">mdi-chart-bar</v-icon>
+                <span>Статистика</span>
+              </div>
+              <v-icon color="green">mdi-information</v-icon>
             </v-card-title>
-            <v-card-text>
-              <v-list>
-                <v-list-item>
+            <v-divider />
+            <v-card-text class="pa-4">
+              <v-list class="pa-0">
+                <v-list-item class="px-0">
                   <template v-slot:prepend>
-                    <v-icon>mdi-film</v-icon>
+                    <v-avatar color="blue" size="40" rounded class="mr-3">
+                      <v-icon color="white">mdi-film</v-icon>
+                    </v-avatar>
                   </template>
-                  <v-list-item-title>Всего фильмов просмотрено</v-list-item-title>
-                  <v-list-item-subtitle>{{ watchedMovies.length }}</v-list-item-subtitle>
+                  <v-list-item-title class="text-body-1 font-weight-medium">
+                    Всего фильмов просмотрено
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="text-body-2 text-medium-emphasis">
+                    {{ watchedMovies.length }}
+                  </v-list-item-subtitle>
                 </v-list-item>
-                
-                <v-list-item>
+
+                <v-divider class="my-3" />
+
+                <v-list-item class="px-0">
                   <template v-slot:prepend>
-                    <v-icon color="red">mdi-heart</v-icon>
+                    <v-avatar color="red" size="40" rounded class="mr-3">
+                      <v-icon color="white">mdi-heart</v-icon>
+                    </v-avatar>
                   </template>
-                  <v-list-item-title>Фильмов в избранном</v-list-item-title>
-                  <v-list-item-subtitle>{{ favoriteMovies.length }}</v-list-item-subtitle>
+                  <v-list-item-title class="text-body-1 font-weight-medium">
+                    Фильмов в избранном
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="text-body-2 text-medium-emphasis">
+                    {{ favoriteMovies.length }}
+                  </v-list-item-subtitle>
                 </v-list-item>
-                
-                <v-list-item>
+
+                <v-divider class="my-3" />
+
+                <v-list-item class="px-0">
                   <template v-slot:prepend>
-                    <v-icon color="red">mdi-heart</v-icon>
+                    <v-avatar color="red" size="40" rounded class="mr-3">
+                      <v-icon color="white">mdi-heart</v-icon>
+                    </v-avatar>
                   </template>
-                  <v-list-item-title>Актёров в избранном</v-list-item-title>
-                  <v-list-item-subtitle>{{ favoriteActors.length }}</v-list-item-subtitle>
+                  <v-list-item-title class="text-body-1 font-weight-medium">
+                    Актёров в избранном
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="text-body-2 text-medium-emphasis">
+                    {{ favoriteActors.length }}
+                  </v-list-item-subtitle>
+                </v-list-item>
+
+                <v-divider class="my-3" />
+
+                <v-list-item class="px-0">
+                  <template v-slot:prepend>
+                    <v-avatar color="amber" size="40" rounded class="mr-3">
+                      <v-icon color="white">mdi-star</v-icon>
+                    </v-avatar>
+                  </template>
+                  <v-list-item-title class="text-body-1 font-weight-medium">
+                    Средний рейтинг
+                  </v-list-item-title>
+                  <v-list-item-subtitle class="text-body-2 text-medium-emphasis">
+                    {{ averageRating }}
+                  </v-list-item-subtitle>
                 </v-list-item>
               </v-list>
             </v-card-text>
@@ -174,29 +300,49 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import PageWrapper from '@/components/PageWrapper.vue'
 import { useFavoriteService } from '@/services/favorite.service'
 import { useWatchedService } from '@/services/watched.service'
 import { useAuthStore } from '@/stores/auth'
-import { useSearchService } from '@/services/search.service'
 import { useUserService } from '@/services/user.service'
+import { useMovieService } from '@/services/movie.service'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const favoriteService = useFavoriteService()
 const watchedService = useWatchedService()
-const searchService = useSearchService()
 const userService = useUserService()
+const movieService = useMovieService()
 
-const searchQuery = ref('')
 const loading = ref(true)
 const user = ref(null)
 const watchedMovies = ref([])
 const favoriteMovies = ref([])
 const favoriteActors = ref([])
+
+const averageRating = computed(() => {
+  const ratings = watchedMovies.value
+    .filter(movie => movie.rating)
+    .map(movie => movie.rating)
+  
+  if (ratings.length === 0) return '—'
+  
+  const avg = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+  return avg.toFixed(1)
+})
+
+const formatDate = (dateString) => {
+  if (!dateString) return '—'
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('ru-RU')
+  } catch {
+    return dateString
+  }
+}
 
 const loadProfileData = async () => {
   try {
@@ -208,6 +354,7 @@ const loadProfileData = async () => {
       return
     }
 
+    // Загружаем данные параллельно
     const [userData, favoritesData, watchedData, actorsData] = await Promise.all([
       userService.getUser(userId),
       favoriteService.getUserFavoriteFilms(),
@@ -216,17 +363,24 @@ const loadProfileData = async () => {
     ])
 
     user.value = userData
-    favoriteMovies.value = favoritesData.items || []
     favoriteActors.value = actorsData.items || []
     
-    // Для просмотренных нужно получить детали фильмов
-    if (watchedData.film_ids?.length > 0) {
-      // TODO: Загрузить детали фильмов по ID
-      watchedMovies.value = watchedData.film_ids.map(id => ({
-        film_id: id,
-        title: `Фильм ${id}` // Временная заглушка
-      }))
+    // Загружаем детали фильмов для избранного
+    if (favoritesData.items?.length > 0) {
+      const filmDetails = await movieService.getMoviesByIds(favoritesData.items.map(f => f.film_id))
+      favoriteMovies.value = filmDetails || []
+    } else {
+      favoriteMovies.value = []
     }
+    
+    // Загружаем детали просмотренных фильмов
+    if (watchedData.film_ids?.length > 0) {
+      const watchedDetails = await movieService.getMoviesByIds(watchedData.film_ids)
+      watchedMovies.value = watchedDetails || []
+    } else {
+      watchedMovies.value = []
+    }
+    
   } catch (err) {
     console.error('Ошибка загрузки профиля:', err)
   } finally {
@@ -234,13 +388,17 @@ const loadProfileData = async () => {
   }
 }
 
-const performSearch = () => {
-  if (searchQuery.value.trim()) {
-    router.push({
-      path: '/search',
-      query: { q: searchQuery.value }
-    })
-  }
+// const performSearch = () => {
+//   if (searchQuery.value.trim()) {
+//     router.push({
+//       path: '/search',
+//       query: { q: searchQuery.value }
+//     })
+//   }
+// }
+
+const clearSearch = () => {
+  searchQuery.value = ''
 }
 
 const goToMovie = (movieId) => {
@@ -284,57 +442,50 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.profile-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 24px;
+/* Профиль будет использовать тему Vuetify */
+.profile-header-card {
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #66ea85 20%, #5f06b9 80%);
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.05);
+.profile-header-card :deep(.v-card-text) {
+  color: white;
+}
+
+/* Анимации для карточек */
+.v-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.v-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Стили для списков */
+.v-list-item {
   border-radius: 8px;
+  margin: 4px 0;
 }
 
-.user-name {
-  font-size: 1.5rem;
+.v-list-item:hover {
+  background-color: rgba(var(--v-theme-primary), 0.08);
+}
+
+/* Аватарки */
+.v-avatar {
+  border: 2px solid rgba(var(--v-theme-primary), 0.3);
+}
+
+/* Чипы */
+.v-chip {
   font-weight: 600;
-  color: white;
-  margin-bottom: 4px;
+  letter-spacing: 0.5px;
 }
 
-.user-email {
-  font-size: 1rem;
-}
-
-:deep(.v-card) {
-  background: #2d3748 !important; /* Серый цвет */
-  color: white !important;
-  border-radius: 12px;
-}
-
-:deep(.v-card-title) {
-  color: white;
-  font-weight: 500;
-}
-
-:deep(.v-list-item) {
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-:deep(.v-list-item:hover) {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-:deep(.v-list-item-title) {
-  color: white;
-}
-
-:deep(.v-list-item-subtitle) {
-  color: #bdbdbd;
+/* Разделители */
+.v-divider {
+  opacity: 0.2;
 }
 </style>

@@ -2,13 +2,13 @@
   <div class="my-6">
     <h2>{{ title }}</h2>
     <v-slide-group show-arrows>
-      <v-slide-item v-for="(movie, index) in movies" :key="movie.id || movie.film_id || index">
+      <v-slide-group-item v-for="(movie, index) in movies" :key="movie.id || movie.film_id || index">
         <MovieCard 
           :movie="movie" 
           class="movie-card-item" 
           @click="handleMovieClick(movie)"
         />
-      </v-slide-item>
+      </v-slide-group-item>
     </v-slide-group>
   </div>
 </template>

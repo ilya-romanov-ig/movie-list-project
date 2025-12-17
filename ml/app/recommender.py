@@ -117,7 +117,7 @@ class MovieRecommender:
         
         popular_films = film_stats.sort_values('popularity_score', ascending=False).head(n)
         
-        return popular_films.index.tolist()
+        return [int(idx) for idx in popular_films.index.tolist()]
     
     def _get_trending_films(self, n=15, days=30):
         """
@@ -148,7 +148,7 @@ class MovieRecommender:
         
         trending_films = trending.sort_values('trend_score', ascending=False).head(n)
         
-        return trending_films.index.tolist()
+        return [int(idx) for idx in trending_films.index.tolist()]
     
     def _collaborative_recommendations(self, user_id, n=20):
         """
@@ -206,7 +206,7 @@ class MovieRecommender:
         
         sorted_recs = sorted(recommendations.items(), key=lambda x: x[1], reverse=True)
         
-        return [film_id for film_id, _ in sorted_recs[:n]]
+        return [int(film_id) for film_id, _ in sorted_recs[:n]]
     
     def _content_based_recommendations(self, user_id, n=20):
         """
@@ -261,7 +261,7 @@ class MovieRecommender:
         
         sorted_films = sorted(film_scores.items(), key=lambda x: x[1], reverse=True)
         
-        return [film_id for film_id, _ in sorted_films[:n]]
+        return [int(film_id) for film_id, _ in sorted_films[:n]]
     
     def get_recommendations(self, user_id, n=10, use_cache=True):
         """
@@ -314,7 +314,9 @@ class MovieRecommender:
                 all_recs.extend(popular_filtered)
             
             recommendations = all_recs[:n]
-        
+
+        recommendations = [int(item) if isinstance(item, (np.integer, np.int64)) else item 
+                          for item in recommendations]
         if use_cache:
             self.recommendations_cache[cache_key] = recommendations
             

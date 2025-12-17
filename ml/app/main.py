@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Optional
 import logging
 
+
 from .recommender import MovieRecommender
 from .config import config
 
@@ -69,7 +70,7 @@ async def get_recommendations(
             raise HTTPException(status_code=500, detail="Recommender not initialized")
         
         recommendations = recommender.get_recommendations(user_id, count)
-        
+
         response = {
             "user_id": user_id,
             "recommendations": recommendations,

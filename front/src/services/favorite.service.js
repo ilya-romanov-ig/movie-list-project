@@ -37,7 +37,7 @@ export function useFavoriteService() {
       const userId = getUserId()
       if (!userId) throw new Error('User not authenticated')
       
-      return api.post(`/favorites/actors/${actorId}`, {}, { user_id: userId })
+      return api.post(`/favorites/actors/${actorId}`, { user_id: userId })
     },
 
     async removeActorFromFavorites(actorId) {

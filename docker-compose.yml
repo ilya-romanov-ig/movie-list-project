@@ -1,17 +1,22 @@
 version: "3.9"
 
 services:
-  # ----------------------- FRONTEND -----------------------
+  # ----------------------- FRONTEND (DEV MODE) -----------------------
   frontend:
     build: ./front
     container_name: vue-frontend
     ports:
-      - "8080:80"
-    restart: unless-stopped
+      - "8080:5173"
     environment:
       VITE_API_URL: http://localhost:8001
       VITE_IMAGES_URL: http://localhost:8001
-
+    volumes:
+      - ./front:/app
+      - /app/node_modules
+    stdin_open: true
+    tty: true
+    command: npm run dev -- --host 0.0.0.0
+    
   # ----------------------- BACKEND -----------------------
   backend:
     build: ./back
@@ -20,25 +25,48 @@ services:
     ports:
       - "8001:8000"
     environment:
-      # База данных и аутентификация
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/appdb
       JWT_SECRET: "supersecretkey123"
-      JWT_ALG: "HS256"  # Изменил с JWT_ALGORITHM на JWT_ALG
-      
-      # Настройки изображений
-      # BASE_URL: http://localhost:8001  # Для доступа с хоста
-      # # BASE_URL: http://backend:8000  # Альтернатива для внутренней сети
+      JWT_ALG: "HS256"
       POSTERS_PATH: /app/posters
       POSTERS_BASE_URL: http://localhost:8001/posters
-      
-      # ML сервис
       ML_URL: http://movie-recommender:8000
     volumes:
-      # Монтируем папку с постерами
-      - ./back/posters:/app/posters:ro  # read-only для безопасности
+      - ./back/posters:/app/posters:ro
+      - ./back:/app  # для разработки бэкенда
     depends_on:
-      - db
-      - movie-recommender
+      db:
+        condition: service_healthy  # ждем готовности БД
+      movie-recommender:
+        condition: service_healthy
+    # Добавим healthcheck для бэкенда
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  backend-test:
+    build: ./back
+    container_name: fastapi-backend-test
+    command: ["pytest", "tests/", "-v"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/appdb
+      JWT_SECRET: "test_secret"
+      ML_URL: http://mock-ml:8000
+    depends_on:
+      mock-ml:
+        condition: service_started
+  
+  # Мок для ML сервиса в тестах
+  mock-ml:
+    image: mockserver/mockserver:latest
+    container_name: mock-ml-service
+    ports:
+      - "8003:1080"
+    command: >
+      -serverPort 1080
+      -logLevel INFO
 
   # ----------------------- ML SERVICE -----------------------
   movie-recommender:
@@ -73,6 +101,12 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql
       - ./back/db_init:/docker-entrypoint-initdb.d
+    # Добавим healthcheck для БД
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:

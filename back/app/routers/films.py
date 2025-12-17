@@ -1,5 +1,7 @@
 # app/routers/films.py
-
+from sqlalchemy import select
+from typing import List, Optional
+from app.models.film import Film
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,7 +32,6 @@ async def top_films(db: AsyncSession = Depends(get_db)):
         "count": len(films),
         "items": [{"id": f.film_id, "title": f.title} for f in films]
     }
-
 
 # --------------------------
 # GET /films/newest

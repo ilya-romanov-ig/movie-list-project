@@ -154,6 +154,28 @@ async def delete_film(session: AsyncSession, film_id: int) -> bool:
     await session.commit()
     return True
 
+async def get_films_by_ids(
+    db: AsyncSession, 
+    film_ids: List[int], 
+    limit: Optional[int] = None
+) -> List[Film]:
+    """Получить фильмы по списку ID"""
+    if not film_ids:
+        return []
+    
+    query = select(Film).where(Film.film_id.in_(film_ids))
+    
+    if limit:
+        query = query.limit(limit)
+    
+    result = await db.execute(query)
+    films = result.scalars().all()
+    
+    # Сохраняем порядок из film_ids
+    film_dict = {film.film_id: film for film in films}
+    ordered_films = [film_dict[film_id] for film_id in film_ids if film_id in film_dict]
+    
+    return ordered_films
 
 # -----------------------
 # Extra useful queries

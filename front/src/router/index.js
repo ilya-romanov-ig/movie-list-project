@@ -8,7 +8,6 @@ import ActorPage from "../views/ActorPage.vue"
 import ProfilePage from "../views/ProfilePage.vue"
 import GenrePage from "../views/GenrePage.vue"
 import Movies from "../views/Movies.vue"
-import SearchPage from "../views/SearchPage.vue"
 import SavedOfUser from "@/views/SavedOfUser.vue"
 
 const routes = [
@@ -54,11 +53,6 @@ const routes = [
     path: "/movies", 
     component: Movies,
     name: 'movies'
-  },
-  { 
-    path: "/search", 
-    component: SearchPage,
-    name: 'search'
   },
   { 
     path: "/saved", 

@@ -126,7 +126,7 @@ import PageWrapper from '@/components/PageWrapper.vue'
 import MovieCard from '@/components/MovieCard.vue'
 import { useActorService } from '@/services/actor.service'
 import { useFavoriteService } from '@/services/favorite.service'
-import { useMovieService } from '@/services/movie.service'
+import { useCombinedMoviesService } from '@/services/front_page.service'
 import { useAuthStore } from '@/stores/auth'
 import { useSearchService } from '@/services/search.service'
 
@@ -136,7 +136,7 @@ const authStore = useAuthStore()
 
 const actorService = useActorService()
 const favoriteService = useFavoriteService()
-const movieService = useMovieService()
+const combinedService = useCombinedMoviesService()
 const searchService = useSearchService()
 
 const searchQuery = ref('')
@@ -164,7 +164,9 @@ const loadActorData = async () => {
     ])
 
     actor.value = actorData
-    filmography.value = filmsData.items?.slice(0, 5) || []
+    
+    const basicFilms = filmsData.items?.slice(0, 5) || []
+    filmography.value = await combinedService.enrichActorFilmography(basicFilms)
 
     if (isAuthenticated.value) {
       await loadUserFavorites()

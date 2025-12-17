@@ -66,7 +66,7 @@ async def list_favorite_films(
 
 @router.post("/actors/{actor_id}")
 async def add_favorite_actor_route(
-    actor_id: int,
+    actor_id: str,
     current_user: User = Depends(get_current_user),  # <- JWT
     db: AsyncSession = Depends(get_db),
 ):
@@ -76,7 +76,7 @@ async def add_favorite_actor_route(
 
 @router.delete("/actors/{actor_id}")
 async def remove_favorite_actor_route(
-    actor_id: int,
+    actor_id: str,
     current_user: User = Depends(get_current_user),  # <- JWT
     db: AsyncSession = Depends(get_db),
 ):
