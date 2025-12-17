@@ -1,26 +1,36 @@
 version: "3.9"
 
+networks:
+  app-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
 services:
-  # ----------------------- FRONTEND (DEV MODE) -----------------------
+  # ----------------------- FRONTEND (VITE DEV SERVER) -----------------------
   frontend:
     build: ./front
-    container_name: vue-frontend
+    container_name: frontend
     ports:
-      - "8080:5173"
+      - "5173:5173"  # Изменил с 8080:5173 на 5173:5173 для consistency
     environment:
       VITE_API_URL: http://localhost:8001
       VITE_IMAGES_URL: http://localhost:8001
+      VITE_ELECTRON_MODE: "true"  
     volumes:
       - ./front:/app
       - /app/node_modules
     stdin_open: true
     tty: true
-    command: npm run dev -- --host 0.0.0.0
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    networks:
+      - app-network
     
   # ----------------------- BACKEND -----------------------
   backend:
     build: ./back
-    container_name: fastapi-backend
+    container_name: backend
     restart: always
     ports:
       - "8001:8000"
@@ -31,6 +41,7 @@ services:
       POSTERS_PATH: /app/posters
       POSTERS_BASE_URL: http://localhost:8001/posters
       ML_URL: http://movie-recommender:8000
+      CORS_ORIGINS: "http://localhost:5173,http://localhost:3000,file://"  # Для Electron
     volumes:
       - ./back/posters:/app/posters:ro
       - ./back:/app
@@ -40,10 +51,12 @@ services:
       movie-recommender:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - app-network
 
   # ----------------------- BACKEND TESTS -----------------------
   backend-test:
@@ -80,7 +93,7 @@ services:
   # ----------------------- ML SERVICE -----------------------
   movie-recommender:
     build: ./ml
-    container_name: movie-recommender-api
+    container_name: ml
     ports:
       - "8002:8000"
     volumes:

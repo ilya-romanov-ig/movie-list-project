@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Загрузка приложения...</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .logo {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.8; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.8; transform: scale(0.95); }
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #64b5f6;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            color: #aaa;
+            margin-bottom: 40px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: #64b5f6;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 30px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .status {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .ports {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .port-badge {
+            background: rgba(100, 181, 246, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .port-badge::before {
+            content: "•";
+            color: #4caf50;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">
+        <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="#64b5f6" opacity="0.8"/>
+            <path d="M30,30 L70,30 L70,70 L30,70 Z" fill="none" stroke="white" stroke-width="5"/>
+            <path d="M40,40 L60,40 L60,60 L40,60 Z" fill="white"/>
+        </svg>
+    </div>
+    
+    <h1>Movie Recommender Desktop</h1>
+    <div class="subtitle">Запуск десктопной версии приложения</div>
+    
+    <div class="spinner"></div>
+    
+    <div class="status" id="status">
+        Проверка подключения к сервисам...
+    </div>
+    
+    <div class="ports">
+        <div class="port-badge">Vue: порт 5173</div>
+        <div class="port-badge">FastAPI: порт 8001</div>
+        <div class="port-badge">ML: порт 8002</div>
+        <div class="port-badge">PostgreSQL: порт 5432</div>
+    </div>
+    
+    <script>
+        // Обновляем статус
+        let statusIndex = 0
+        const statusMessages = [
+            'Проверка Vue dev сервера...',
+            'Подключение к FastAPI...',
+            'Проверка ML сервиса...',
+            'Инициализация приложения...'
+        ]
+        
+        function updateStatus() {
+            document.getElementById('status').textContent = statusMessages[statusIndex]
+            statusIndex = (statusIndex + 1) % statusMessages.length
+        }
+        
+        setInterval(updateStatus, 2000)
+        
+        // Автоматическая перезагрузка через 10 секунд
+        setTimeout(() => {
+            window.location.reload()
+        }, 10000)
+    </script>
+</body>
+</html>
