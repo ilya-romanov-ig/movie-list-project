@@ -33,40 +33,49 @@ services:
       ML_URL: http://movie-recommender:8000
     volumes:
       - ./back/posters:/app/posters:ro
-      - ./back:/app  # для разработки бэкенда
+      - ./back:/app
     depends_on:
       db:
-        condition: service_healthy  # ждем готовности БД
+        condition: service_healthy
       movie-recommender:
         condition: service_healthy
-    # Добавим healthcheck для бэкенда
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
       retries: 3
 
+  # ----------------------- BACKEND TESTS -----------------------
   backend-test:
-    build: ./back
-    container_name: fastapi-backend-test
-    command: ["pytest", "tests/", "-v"]
+    build:
+      context: ./back
+      dockerfile: Dockerfile.test  
+    command: ["pytest", "tests/", "-v", "--tb=short"]
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/appdb
-      JWT_SECRET: "test_secret"
-      ML_URL: http://mock-ml:8000
+      ML_SERVICE_URL: http://ml-mock:8001
+      JWT_SECRET: "test_secret_key_for_testing_only"
+      TESTING: "true"
+      PYTHONPATH: "/app"
     depends_on:
-      mock-ml:
+      db:
+        condition: service_healthy
+      ml-mock:
         condition: service_started
-  
-  # Мок для ML сервиса в тестах
-  mock-ml:
-    image: mockserver/mockserver:latest
-    container_name: mock-ml-service
+
+  # ----------------------- ML MOCK FOR TESTS -----------------------
+  ml-mock:
+    build:
+      context: ./ml-mock  # Создадим простой мок-сервер
+      dockerfile: Dockerfile
+    container_name: ml-mock
     ports:
-      - "8003:1080"
-    command: >
-      -serverPort 1080
-      -logLevel INFO
+      - "8003:8000"  # Используем другой порт
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # ----------------------- ML SERVICE -----------------------
   movie-recommender:
@@ -81,11 +90,10 @@ services:
       - ./ml/.env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 40s
 
   # ----------------------- POSTGRES -----------------------
   db:
@@ -101,12 +109,12 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql
       - ./back/db_init:/docker-entrypoint-initdb.d
-    # Добавим healthcheck для БД
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 3
 
 volumes:
   pgdata:
+  test-pgdata:

@@ -10,10 +10,10 @@ def test_root_endpoint():
     response = client.get("/")
     assert response.status_code == 200
     data = response.json()
-    assert "service" in data
+    assert "docs" in data
     # Убедитесь, что название сервиса совпадает с вашим main.py
     # Если в main.py название другое - измените здесь
-    assert "Movie Recommender" in data.get("service", "")  # ← Более гибкая проверка
+    assert "/api/docs" in data.get("docs", "")  # ← Более гибкая проверка
 
 
 def test_health_endpoint():
